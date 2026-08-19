@@ -98,3 +98,75 @@ tbody tr:first-child td{background:#fbfdfc}tbody tr:hover td{background:#f7faf8}
 @media(max-width:760px){
   .three-controls{grid-template-columns:1fr;}
 }
+
+
+/* v1.7 — camera controls and scan status share one horizontal row */
+.camera-status-row{
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr);
+  align-items:stretch;
+  gap:10px;
+  margin-top:14px;
+}
+
+.camera-status-row .camera-actions{
+  margin-top:0;
+  display:flex;
+  align-items:center;
+  align-self:stretch;
+  gap:7px;
+  flex-wrap:nowrap;
+}
+
+.camera-status-row .status-card{
+  margin-top:0;
+  min-height:64px;
+  padding:10px 12px;
+  min-width:0;
+}
+
+.camera-status-row .status-icon{
+  flex:0 0 30px;
+  width:30px;
+  font-size:1.55rem;
+}
+
+.camera-status-row .status-text{
+  min-width:0;
+}
+
+.camera-status-row .status-title{
+  line-height:1.15;
+}
+
+.camera-status-row .status-message{
+  line-height:1.25;
+  overflow-wrap:anywhere;
+}
+
+.camera-status-row .camera-current-label{
+  max-width:92px;
+  line-height:1.15;
+}
+
+/* Keep the camera/status row together even on phones.
+   The status card compresses while the camera controls stay tappable. */
+@media(max-width:600px){
+  .camera-status-row{
+    grid-template-columns:auto minmax(0,1fr);
+    gap:8px;
+  }
+
+  .camera-status-row .camera-actions{
+    gap:5px;
+  }
+
+  .camera-status-row .status-card{
+    min-height:60px;
+    padding:9px 10px;
+  }
+
+  .camera-status-row .camera-current-label{
+    display:none !important;
+  }
+}

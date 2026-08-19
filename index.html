@@ -52,23 +52,25 @@
         <p class="helper"><strong>Check In</strong> and the keyboard <strong>Enter</strong> key do the same thing. A barcode scanner that sends Enter will submit automatically.</p>
       </div>
 
-      <div class="camera-actions compact-camera-actions">
-        <button id="camera-control-btn" class="icon-button camera-icon-button" type="button" aria-label="Open front camera scanner" title="Open Front camera scanner">📷</button>
-        <span id="camera-current-label" class="camera-current-label hidden">Front camera</span>
-        <button id="camera-close-btn" class="icon-button close-camera-button hidden" type="button" aria-label="Close camera" title="Close camera">✕</button>
+      <div class="camera-status-row">
+        <div class="camera-actions compact-camera-actions">
+          <button id="camera-control-btn" class="icon-button camera-icon-button" type="button" aria-label="Open front camera scanner" title="Open Front camera scanner">📷</button>
+          <span id="camera-current-label" class="camera-current-label hidden">Front camera</span>
+          <button id="camera-close-btn" class="icon-button close-camera-button hidden" type="button" aria-label="Close camera" title="Close camera">✕</button>
+        </div>
+
+        <div id="status-card" class="status-card neutral" aria-live="polite">
+          <div id="status-icon" class="status-icon">●</div>
+          <div class="status-text">
+            <div id="status-title" class="status-title">Ready</div>
+            <div id="status-message" class="status-message">Scan the first trap.</div>
+          </div>
+        </div>
       </div>
 
       <div id="camera-wrap" class="camera-wrap hidden">
         <div id="camera-reader"></div>
         <p class="camera-help">Hold the barcode horizontally inside the camera view.</p>
-      </div>
-
-      <div id="status-card" class="status-card neutral" aria-live="polite">
-        <div id="status-icon" class="status-icon">●</div>
-        <div>
-          <div id="status-title" class="status-title">Ready</div>
-          <div id="status-message" class="status-message">Scan the first trap.</div>
-        </div>
       </div>
 
       <div id="last-record" class="last-record hidden">
@@ -125,6 +127,6 @@
     </section>
   </main>
 
-  <footer>FieldSeeker Freezer Scanner v1.6</footer>
+  <footer>FieldSeeker Freezer Scanner v1.7</footer>
 </body>
 </html>
