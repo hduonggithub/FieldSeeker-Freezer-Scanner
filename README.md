@@ -1,4 +1,4 @@
-# FieldSeeker Freezer Scanner v1.2
+# FieldSeeker Freezer Scanner v1.3
 
 ## What v1 does
 - Scan/enter Trap Barcode
@@ -111,3 +111,16 @@ REVIEWEDBY   = signed-in ArcGIS username
 ```
 
 The username is stored as the permanent freezer operator identity. The app may display the user's full name for readability, but REVIEWEDBY stores the ArcGIS username.
+
+
+## v1.3 camera behavior
+
+After the camera recognizes any barcode, it immediately closes the camera preview and shows the validation result.
+
+This applies to:
+- a new valid freezer check-in,
+- an already-in-freezer barcode,
+- a barcode not found in TrapData,
+- and a duplicate barcode.
+
+Tap **Open Camera Scanner** again for the next trap.

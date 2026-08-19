@@ -5,7 +5,7 @@
   const $ = id => document.getElementById(id);
 
   const state = {
-    demo:false, layer:null, identityManager:null, scanner:null, cameraRunning:false,
+    demo:false, layer:null, identityManager:null, scanner:null, cameraRunning:false, cameraDecodeLocked:false,
     processing:false, sessionCount:0, todayRows:[], lastScannedBarcode:"", lastScanAt:0,
     currentUsername:"", currentFullName:""
   };
@@ -260,8 +260,19 @@
       state.scanner=new Html5Qrcode("camera-reader",{formatsToSupport:formats.length?formats:undefined,
         experimentalFeatures:{useBarCodeDetectorIfSupported:false}});
       await state.scanner.start({facingMode:"environment"},{fps:10,qrbox:{width:300,height:130},aspectRatio:1.777778},
-        decoded=>processBarcode(decoded,"camera"),()=>{});
-      state.cameraRunning=true;setStatus("neutral","Camera ready","Scan a trap barcode.");
+        async decoded=>{
+          if(state.cameraDecodeLocked) return;
+          state.cameraDecodeLocked=true;
+
+          // Close immediately after ANY barcode is decoded so the result
+          // panel is visible whether the code is valid, invalid, duplicate,
+          // or already checked into the freezer.
+          await stopCamera();
+          await processBarcode(decoded,"camera");
+        },()=>{});
+      state.cameraRunning=true;
+      state.cameraDecodeLocked=false;
+      setStatus("neutral","Camera ready","Scan a trap barcode.");
     }catch(err){
       console.error(err);$("camera-wrap").classList.add("hidden");$("camera-start-btn").classList.remove("hidden");$("camera-stop-btn").classList.add("hidden");
       setStatus("error","Camera could not start","Allow camera access in Safari/iPad settings, then try again.");
@@ -271,7 +282,12 @@
   async function stopCamera(){
     if(!state.scanner)return;
     try{if(state.cameraRunning)await state.scanner.stop();state.scanner.clear();}catch(_){}
-    state.scanner=null;state.cameraRunning=false;$("camera-wrap").classList.add("hidden");$("camera-start-btn").classList.remove("hidden");$("camera-stop-btn").classList.add("hidden");
+    state.scanner=null;
+    state.cameraRunning=false;
+    state.cameraDecodeLocked=false;
+    $("camera-wrap").classList.add("hidden");
+    $("camera-start-btn").classList.remove("hidden");
+    $("camera-stop-btn").classList.add("hidden");
   }
 
   function wireEvents(){
