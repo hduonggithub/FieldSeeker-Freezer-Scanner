@@ -49,12 +49,13 @@
                  spellcheck="false" placeholder="Scan or type barcode" />
           <button id="submit-barcode-btn" class="button primary" type="button">Check In</button>
         </div>
-        <p class="helper">A Bluetooth/USB scanner can type here and send Enter.</p>
+        <p class="helper"><strong>Check In</strong> and the keyboard <strong>Enter</strong> key do the same thing. A barcode scanner that sends Enter will submit automatically.</p>
       </div>
 
-      <div class="camera-actions">
-        <button id="camera-start-btn" class="button camera" type="button">Open Camera Scanner</button>
-        <button id="camera-stop-btn" class="button ghost hidden" type="button">Close Camera</button>
+      <div class="camera-actions compact-camera-actions">
+        <button id="camera-control-btn" class="icon-button camera-icon-button" type="button" aria-label="Open front camera scanner" title="Open Front camera scanner">📷</button>
+        <span id="camera-current-label" class="camera-current-label hidden">Front camera</span>
+        <button id="camera-close-btn" class="icon-button close-camera-button hidden" type="button" aria-label="Close camera" title="Close camera">✕</button>
       </div>
 
       <div id="camera-wrap" class="camera-wrap hidden">
@@ -86,13 +87,22 @@
     <section class="list-panel">
       <div class="section-heading list-heading">
         <div>
-          <h2>Traps Added Today</h2>
-          <p><span id="today-count">0</span> traps freezer-checked today</p>
+          <h2>Traps Added</h2>
+          <p><span id="today-count">0</span> traps shown · <span id="period-count-label">This Week</span></p>
         </div>
         <button id="refresh-btn" class="button ghost" type="button">Refresh</button>
       </div>
 
-      <div class="list-controls">
+      <div class="list-controls three-controls">
+        <label>Period
+          <select id="period-filter">
+            <option value="today">Today</option>
+            <option value="this-week" selected>This Week</option>
+            <option value="last-7-days">Last 7 Days</option>
+            <option value="last-30-days">Last 30 Days</option>
+            <option value="all">All</option>
+          </select>
+        </label>
         <label>Search<input id="table-search" type="search" placeholder="Barcode or location" /></label>
         <label>Sort
           <select id="sort-select">
@@ -115,6 +125,6 @@
     </section>
   </main>
 
-  <footer>FieldSeeker Freezer Scanner v1.4</footer>
+  <footer>FieldSeeker Freezer Scanner v1.6</footer>
 </body>
 </html>

@@ -6,6 +6,7 @@
 
   const state = {
     demo:false, layer:null, identityManager:null, scanner:null, cameraRunning:false, cameraDecodeLocked:false,
+    cameraFacing:"user", cameraSwitching:false,
     processing:false, sessionCount:0, todayRows:[], lastScannedBarcode:"", lastScanAt:0,
     currentUsername:"", currentFullName:""
   };
@@ -48,6 +49,85 @@
   const sameLocalDay = (v,ref=new Date()) => {
     const d=asDate(v); return !!d && d.getFullYear()===ref.getFullYear() && d.getMonth()===ref.getMonth() && d.getDate()===ref.getDate();
   };
+
+  function startOfLocalWeek(reference=new Date()){
+    const d=new Date(reference);
+    d.setHours(0,0,0,0);
+    const weekStartsOn=Number.isInteger(cfg.weekStartsOn) ? cfg.weekStartsOn : 1;
+    const delta=(d.getDay()-weekStartsOn+7)%7;
+    d.setDate(d.getDate()-delta);
+    return d;
+  }
+
+  function sameLocalWeek(value,reference=new Date()){
+    const d=asDate(value);
+    if(!d) return false;
+    const start=startOfLocalWeek(reference);
+    const end=new Date(start);
+    end.setDate(end.getDate()+7);
+    return d>=start && d<end;
+  }
+
+  function formatArcgisUtcTimestamp(date){
+    const pad=n=>String(n).padStart(2,"0");
+    return `${date.getUTCFullYear()}-${pad(date.getUTCMonth()+1)}-${pad(date.getUTCDate())} ${pad(date.getUTCHours())}:${pad(date.getUTCMinutes())}:${pad(date.getUTCSeconds())}`;
+  }
+
+  function startOfLocalDay(reference=new Date()){
+    const d=new Date(reference);
+    d.setHours(0,0,0,0);
+    return d;
+  }
+
+  function periodStart(period){
+    const now=new Date();
+    if(period==="today") return startOfLocalDay(now);
+    if(period==="this-week") return startOfLocalWeek(now);
+    if(period==="last-7-days") return new Date(now.getTime()-(7*24*60*60*1000));
+    if(period==="last-30-days") return new Date(now.getTime()-(30*24*60*60*1000));
+    return null;
+  }
+
+  function matchesSelectedPeriod(value){
+    const d=asDate(value);
+    if(!d) return false;
+    const period=$("period-filter")?.value || "this-week";
+    const start=periodStart(period);
+    return !start || d>=start;
+  }
+
+  function selectedPeriodLabel(){
+    const select=$("period-filter");
+    return select?.options?.[select.selectedIndex]?.text || "This Week";
+  }
+
+  function cameraName(){
+    return state.cameraFacing==="user" ? "Front" : "Back";
+  }
+
+  function updateCameraButtons(){
+    const control=$("camera-control-btn");
+    const close=$("camera-close-btn");
+    const label=$("camera-current-label");
+    if(!control) return;
+
+    if(state.cameraRunning){
+      control.textContent="🔄";
+      control.setAttribute("aria-label",`Switch camera. Current: ${cameraName()} camera`);
+      control.title=`Switch camera (currently ${cameraName()})`;
+      close?.classList.remove("hidden");
+      if(label){
+        label.textContent=`${cameraName()} camera`;
+        label.classList.remove("hidden");
+      }
+    }else{
+      control.textContent="📷";
+      control.setAttribute("aria-label",`Open ${cameraName().toLowerCase()} camera scanner`);
+      control.title=`Open ${cameraName()} camera scanner`;
+      close?.classList.add("hidden");
+      label?.classList.add("hidden");
+    }
+  }
   const escapeSql = v => String(v).replace(/'/g,"''");
   const normalizeBarcode = v => String(v||"").trim().toUpperCase();
 
@@ -72,8 +152,9 @@
 
   function renderTable(){
     const tbody=$("trap-table-body"), search=$("table-search").value.trim().toLowerCase(), sort=$("sort-select").value;
-    let rows=state.todayRows.map(rowAttrs).filter(a=>sameLocalDay(a[f.freezerTime]));
+    let rows=state.todayRows.map(rowAttrs).filter(a=>matchesSelectedPeriod(a[f.freezerTime]));
     $("today-count").textContent=String(rows.length);
+    $("period-count-label").textContent=selectedPeriodLabel();
     if(search) rows=rows.filter(a=>String(a[f.barcode]??"").toLowerCase().includes(search)||String(a[f.location]??"").toLowerCase().includes(search));
     rows.sort((a,b)=>{
       const fa=asDate(a[f.freezerTime])?.getTime()||0, fb=asDate(b[f.freezerTime])?.getTime()||0;
@@ -83,7 +164,7 @@
       if(sort==="location-asc") return String(a[f.location]??"").localeCompare(String(b[f.location]??""));
       return fb-fa;
     });
-    if(!rows.length){tbody.innerHTML='<tr><td colspan="6" class="empty-row">No matching freezer check-ins today.</td></tr>';return;}
+    if(!rows.length){tbody.innerHTML='<tr><td colspan="6" class="empty-row">No matching freezer check-ins for this period.</td></tr>';return;}
     tbody.innerHTML="";
     rows.forEach(a=>{
       const tr=document.createElement("tr");
@@ -126,10 +207,22 @@
   async function loadTodayRows(){
     if(state.demo){state.todayRows=demoRows.map(x=>({...x}));renderTable();return;}
     const q=state.layer.createQuery();
-    q.where=`${f.freezerTime} IS NOT NULL`;
+    const period=$("period-filter")?.value || "this-week";
+    const start=periodStart(period);
+
+    if(start){
+      const startUtc=formatArcgisUtcTimestamp(start);
+      q.where=`${f.freezerTime} >= TIMESTAMP '${startUtc}'`;
+    }else{
+      q.where=`${f.freezerTime} IS NOT NULL`;
+    }
+
     q.outFields=[state.layer.objectIdField,f.barcode,f.activity,f.retrieved,f.location,f.zone,f.fieldTech,f.reviewedBy,f.freezerTime].filter(Boolean);
-    q.returnGeometry=false; q.orderByFields=[`${f.freezerTime} DESC`]; q.num=Number(cfg.recentLimit||500);
-    state.todayRows=(await state.layer.queryFeatures(q)).features; renderTable();
+    q.returnGeometry=false;
+    q.orderByFields=[`${f.freezerTime} DESC`];
+    q.num=Number(cfg.recentLimit||1000);
+    state.todayRows=(await state.layer.queryFeatures(q)).features;
+    renderTable();
   }
 
   async function liveCheckIn(barcode){
@@ -273,58 +366,125 @@
   }
 
   async function startCamera(){
-    if(state.cameraRunning)return;
-    if(!window.Html5Qrcode){setStatus("error","Camera unavailable","Barcode scanner library did not load.");return;}
+    if(state.cameraRunning || state.cameraSwitching) return;
+    if(!window.Html5Qrcode){
+      setStatus("error","Camera unavailable","Barcode scanner library did not load.");
+      return;
+    }
+
     try{
-      $("camera-wrap").classList.remove("hidden");$("camera-start-btn").classList.add("hidden");$("camera-stop-btn").classList.remove("hidden");
+      $("camera-wrap").classList.remove("hidden");
       const formats=[],F=window.Html5QrcodeSupportedFormats;
       if(F)[F.CODE_128,F.QR_CODE,F.DATA_MATRIX].forEach(x=>{if(x!==undefined)formats.push(x);});
-      state.scanner=new Html5Qrcode("camera-reader",{formatsToSupport:formats.length?formats:undefined,
-        experimentalFeatures:{useBarCodeDetectorIfSupported:false}});
-      await state.scanner.start({facingMode:"environment"},{fps:10,qrbox:{width:300,height:130},aspectRatio:1.777778},
+
+      state.scanner=new Html5Qrcode("camera-reader",{
+        formatsToSupport:formats.length?formats:undefined,
+        experimentalFeatures:{useBarCodeDetectorIfSupported:false}
+      });
+
+      await state.scanner.start(
+        {facingMode:state.cameraFacing},
+        {fps:10,qrbox:{width:300,height:130},aspectRatio:1.777778},
         async decoded=>{
           if(state.cameraDecodeLocked) return;
           state.cameraDecodeLocked=true;
-
-          // Close immediately after ANY barcode is decoded so the result
-          // panel is visible whether the code is valid, invalid, duplicate,
-          // or already checked into the freezer.
           await stopCamera();
           await processBarcode(decoded,"camera");
-        },()=>{});
+        },
+        ()=>{}
+      );
+
       state.cameraRunning=true;
       state.cameraDecodeLocked=false;
-      setStatus("neutral","Camera ready","Scan a trap barcode.");
+      updateCameraButtons();
+      setStatus("neutral",`${cameraName()} camera ready`,"Scan a trap barcode.");
     }catch(err){
-      console.error(err);$("camera-wrap").classList.add("hidden");$("camera-start-btn").classList.remove("hidden");$("camera-stop-btn").classList.add("hidden");
+      console.error(err);
+      state.scanner=null;
+      state.cameraRunning=false;
+      state.cameraDecodeLocked=false;
+      $("camera-wrap").classList.add("hidden");
+      updateCameraButtons();
       setStatus("error","Camera could not start","Allow camera access in Safari/iPad settings, then try again.");
     }
   }
 
-  async function stopCamera(){
-    if(!state.scanner)return;
-    try{if(state.cameraRunning)await state.scanner.stop();state.scanner.clear();}catch(_){}
+  async function stopCamera(keepPanel=false){
+    if(state.scanner){
+      try{
+        if(state.cameraRunning) await state.scanner.stop();
+        state.scanner.clear();
+      }catch(_){}
+    }
+
     state.scanner=null;
     state.cameraRunning=false;
     state.cameraDecodeLocked=false;
-    $("camera-wrap").classList.add("hidden");
-    $("camera-start-btn").classList.remove("hidden");
-    $("camera-stop-btn").classList.add("hidden");
+
+    if(!keepPanel){
+      $("camera-wrap").classList.add("hidden");
+    }
+    updateCameraButtons();
+  }
+
+  async function switchCamera(){
+    if(!state.cameraRunning || state.cameraSwitching) return;
+    state.cameraSwitching=true;
+
+    try{
+      await stopCamera(true);
+      state.cameraFacing=state.cameraFacing==="user" ? "environment" : "user";
+      try{localStorage.setItem("fieldseekerFreezerCameraFacing",state.cameraFacing);}catch(_){}
+      setStatus("neutral","Switching camera…",`Opening ${cameraName().toLowerCase()} camera.`);
+      state.cameraSwitching=false;
+      await startCamera();
+    }catch(err){
+      console.error(err);
+      state.cameraSwitching=false;
+      await stopCamera();
+      setStatus("error","Could not switch camera",err.message||"Try opening the camera again.");
+    }
+  }
+
+  async function cameraControl(){
+    if(state.cameraRunning){
+      await switchCamera();
+    }else{
+      await startCamera();
+    }
   }
 
   function wireEvents(){
     $("submit-barcode-btn").addEventListener("click",()=>processBarcode($("barcode-input").value));
     $("barcode-input").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();processBarcode(e.currentTarget.value);}});
-    $("camera-start-btn").addEventListener("click",startCamera);$("camera-stop-btn").addEventListener("click",stopCamera);
+    $("camera-control-btn").addEventListener("click",cameraControl);
+    $("camera-close-btn").addEventListener("click",()=>stopCamera());
     $("refresh-btn").addEventListener("click",async()=>{try{await loadTodayRows();setStatus("neutral","Ready","List refreshed.");}catch(err){setStatus("error","Refresh failed",err.message||"Could not refresh.");}});
-    $("table-search").addEventListener("input",renderTable);$("sort-select").addEventListener("change",renderTable);
+    $("table-search").addEventListener("input",renderTable);
+    $("sort-select").addEventListener("change",renderTable);
+    $("period-filter").addEventListener("change",async()=>{
+      try{
+        setStatus("neutral","Loading…",`Loading ${selectedPeriodLabel().toLowerCase()} freezer check-ins.`);
+        await loadTodayRows();
+        setStatus("neutral","Ready","Period filter updated.");
+      }catch(err){
+        setStatus("error","Filter failed",err.message||"Could not load this period.");
+      }
+    });
     $("sign-out-btn").addEventListener("click",()=>{state.identityManager?.destroyCredentials();location.reload();});
     $("sign-in-btn").addEventListener("click",async()=>{try{await initializeArcGIS();setStatus("neutral","Ready","Scan the first trap.");}catch(err){setStatus("error","Sign-in failed",err.message||"Could not sign in.");}});
     setInterval(renderTable,30000);
   }
 
   async function init(){
-    $("app-title").textContent=cfg.appTitle||"Lab Freezer Scanner";wireEvents();
+    $("app-title").textContent=cfg.appTitle||"Lab Freezer Scanner";
+    try{
+      const savedFacing=localStorage.getItem("fieldseekerFreezerCameraFacing");
+      if(savedFacing==="user" || savedFacing==="environment") state.cameraFacing=savedFacing;
+    }catch(_){}
+    $("period-filter").value="this-week";
+    updateCameraButtons();
+    wireEvents();
     if(!configured()&&cfg.demoWhenUnconfigured!==false){
       state.demo=true;$("demo-banner").classList.remove("hidden");$("connection-label").textContent="Demo mode";
       state.todayRows=demoRows.map(x=>({...x}));renderTable();setStatus("neutral","Demo ready","Type any barcode or open the camera scanner.");return;

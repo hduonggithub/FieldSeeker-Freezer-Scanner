@@ -1,4 +1,4 @@
-# FieldSeeker Freezer Scanner v1.4
+# FieldSeeker Freezer Scanner v1.6
 
 ## What v1 does
 - Scan/enter Trap Barcode
@@ -159,3 +159,35 @@ barcode found + Retrieved + REVIEWEDDATE null
 ```
 
 This keeps barcode lookup simple while preventing a trap from being freezer-checked before the field Retrieve step is complete.
+
+
+## v1.5 changes
+- Right-hand freezer list queries the current calendar week only (Monday start by default).
+- Exact barcode lookup is not week-limited, so a trap crossing a week boundary can still be found.
+- Check In button and Enter key perform the same action.
+- Front/Back camera selector added; Front is the default for a wall-mounted iPad.
+
+
+## v1.6 UI changes
+
+### Camera control
+The large **Open Camera Scanner** text button and Front/Back dropdown are removed.
+
+There is now one round camera control:
+
+- **📷** when the camera is closed: opens the remembered/default camera.
+- **🔄** while the camera is open: switches Front ↔ Back immediately.
+- **✕** closes the camera manually.
+- After any barcode is decoded, the camera still closes automatically so the result is visible.
+- The last selected camera is remembered on that browser/iPad.
+
+### Freezer-list period filter
+The panel is now titled **Traps Added** and has a **Period** filter:
+
+- Today
+- **This Week** (default)
+- Last 7 Days
+- Last 30 Days
+- All
+
+Changing the period triggers a new ArcGIS query; the app does not have to load all historical TrapData each time. Barcode scan lookup itself remains unrestricted by period.
