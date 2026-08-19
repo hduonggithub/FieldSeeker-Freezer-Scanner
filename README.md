@@ -1,4 +1,4 @@
-# FieldSeeker Freezer Scanner v1.3
+# FieldSeeker Freezer Scanner v1.4
 
 ## What v1 does
 - Scan/enter Trap Barcode
@@ -124,3 +124,38 @@ This applies to:
 - and a duplicate barcode.
 
 Tap **Open Camera Scanner** again for the next trap.
+
+
+## v1.4 freezer eligibility
+
+A barcode must exist in TrapData, and a new freezer check-in is accepted only when the record is already **Retrieved**.
+
+The app requires both:
+
+```text
+TRAPACTIVITYTYPE = R
+ENDDATETIME is not null
+```
+
+Decision order:
+
+```text
+barcode not found
+→ BARCODE NOT FOUND
+→ no edit
+
+barcode found + REVIEWEDDATE already set
+→ ALREADY IN FREEZER
+→ no edit
+
+barcode found + not Retrieved
+→ NOT RETRIEVED
+→ no edit
+
+barcode found + Retrieved + REVIEWEDDATE null
+→ REVIEWEDDATE = current time
+→ REVIEWEDBY = signed-in ArcGIS username
+→ save
+```
+
+This keeps barcode lookup simple while preventing a trap from being freezer-checked before the field Retrieve step is complete.

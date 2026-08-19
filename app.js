@@ -173,6 +173,18 @@
       };
     }
 
+    // A trap is eligible for freezer check-in only after it has been Retrieved.
+    // We require both the stored Retrieve activity code and a Retrieve timestamp.
+    const activityValue=String(attrs[f.activity]??"").trim().toUpperCase();
+    const retrievedDate=asDate(attrs[f.retrieved]);
+
+    if(activityValue!==String(cfg.retrievedValue||"R").trim().toUpperCase() || !retrievedDate){
+      return {
+        status:"notRetrieved",
+        attributes:attrs
+      };
+    }
+
     if(!state.currentUsername){
       throw new Error("Signed-in ArcGIS username could not be determined.");
     }
@@ -230,6 +242,16 @@
           "warning",
           "ALREADY IN FREEZER",
           `${barcode} was freezer-checked at ${fmtDateTime(a[f.freezerTime])}${who}. No changes were made.`
+        );
+        $("barcode-input").value="";
+        return;
+      }
+
+      if(result.status==="notRetrieved"){
+        setStatus(
+          "error",
+          "NOT RETRIEVED",
+          `${barcode} exists, but it has not been marked Retrieved with a Retrieve time. It was not added to the freezer.`
         );
         $("barcode-input").value="";
         return;
