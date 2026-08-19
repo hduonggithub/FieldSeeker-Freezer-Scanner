@@ -1,8 +1,8 @@
 window.FREEZER_APP_CONFIG = {
   appTitle: "Lab Freezer Scanner",
   portalUrl: "https://www.arcgis.com",
-  oauthAppId: "PASTE_ARCGIS_OAUTH_CLIENT_ID_HERE",
-  layerUrl: "PASTE_TRAPDATA_FREEZER_VIEW_LAYER_URL_HERE",
+  oauthAppId: "KjDgfnd8tToLcsTA",
+  layerUrl: "https://services8.arcgis.com/V78yHC8goSD1vt01/arcgis/rest/services/FieldSeekerBarcodePrototype_Freezer_View/FeatureServer/1",
   fields: {
     barcode: "Barcode",
     activity: "TRAPACTIVITYTYPE",
