@@ -1,0 +1,10 @@
+{
+  "name": "FieldSeeker Lab Freezer Scanner",
+  "short_name": "Freezer Scanner",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4f7f5",
+  "theme_color": "#176b47",
+  "description": "Barcode-based ArcGIS Online freezer check-in for TrapData."
+}
