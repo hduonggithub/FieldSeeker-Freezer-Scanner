@@ -1,12 +1,12 @@
-# FieldSeeker Freezer Scanner v1.0
+# FieldSeeker Freezer Scanner v1.2
 
 ## What v1 does
 - Scan/enter Trap Barcode
-- Find exactly one existing TrapData record where:
-  - Barcode matches
-  - TRAPACTIVITYTYPE = R
-  - REVIEWEDDATE is null
-- Automatically set REVIEWEDDATE to the current time
+- Look up TrapData using **Barcode only**
+- If no record exists: show **Barcode not found**
+- If more than one record has the barcode: stop with a duplicate-barcode error
+- If the record already has REVIEWEDDATE: open/show the trap and say **Already in freezer**; do not change or add anything
+- If REVIEWEDDATE is null: automatically set REVIEWEDDATE to the current time
 - Automatically set REVIEWEDBY to the signed-in ArcGIS username
 - Save with ArcGIS FeatureLayer.applyEdits()
 - Refuse zero-match, duplicate-match, and already-frozen cases
@@ -65,16 +65,40 @@ Share → Add to Home Screen.
 
 Landscape is recommended for the left scanner/right freezer-list layout.
 
-## Important
-The live ArcGIS validation query is:
+## Important — v1.2 barcode rule
+
+The live lookup is now intentionally only:
 
 ```sql
 Barcode = '<scan>'
-AND TRAPACTIVITYTYPE = 'R'
-AND REVIEWEDDATE IS NULL
 ```
 
-A successful scan immediately writes `REVIEWEDDATE`; there is no Submit button.
+Then the app decides:
+
+```text
+0 matches
+→ BARCODE NOT FOUND
+→ no edit
+
+1 match + REVIEWEDDATE has a value
+→ ALREADY IN FREEZER
+→ show existing trap / Freezer Time / Reviewed By
+→ no edit
+→ do not add to the session counter or right-panel list
+
+1 match + REVIEWEDDATE is null
+→ set REVIEWEDDATE = current time
+→ set REVIEWEDBY = signed-in ArcGIS username
+→ save immediately
+
+more than 1 match
+→ DUPLICATE BARCODE
+→ no edit
+```
+
+`TRAPACTIVITYTYPE` is no longer required for freezer check-in validation.
+
+A successful new scan immediately writes `REVIEWEDDATE`; there is no Submit button.
 
 
 ## Freezer operator audit

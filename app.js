@@ -133,41 +133,84 @@
   }
 
   async function liveCheckIn(barcode){
+    // v1.2 rule: Barcode is the only lookup/validation key.
+    // 0 matches  -> barcode not found
+    // 1 match + REVIEWEDDATE already set -> show existing freezer event, do not edit
+    // 1 match + REVIEWEDDATE null -> set REVIEWEDDATE + REVIEWEDBY
+    // >1 matches -> duplicate-barcode safety stop
     const q=state.layer.createQuery();
-    q.where=`${f.barcode} = '${escapeSql(barcode)}' AND ${f.activity} = '${escapeSql(cfg.retrievedValue||"R")}' AND ${f.freezerTime} IS NULL`;
-    q.outFields=[state.layer.objectIdField,f.barcode,f.activity,f.retrieved,f.location,f.zone,f.fieldTech,f.reviewedBy,f.freezerTime].filter(Boolean);
+    q.where=`${f.barcode} = '${escapeSql(barcode)}'`;
+    q.outFields=[
+      state.layer.objectIdField,
+      f.barcode,
+      f.activity,
+      f.retrieved,
+      f.location,
+      f.zone,
+      f.fieldTech,
+      f.reviewedBy,
+      f.freezerTime
+    ].filter(Boolean);
     q.returnGeometry=false;
+
     const result=await state.layer.queryFeatures(q);
+
     if(result.features.length===0){
-      const d=state.layer.createQuery();
-      d.where=`${f.barcode} = '${escapeSql(barcode)}' AND ${f.freezerTime} IS NOT NULL`;
-      d.outFields=[f.barcode,f.freezerTime,f.location].filter(Boolean); d.returnGeometry=false; d.orderByFields=[`${f.freezerTime} DESC`]; d.num=1;
-      const prior=await state.layer.queryFeatures(d);
-      if(prior.features.length){
-        const a=prior.features[0].attributes;
-        throw new Error(`Already checked in at ${fmtDateTime(a[f.freezerTime])}${a[f.location]?` (${a[f.location]}).`:"."}`);
-      }
-      throw new Error("No eligible retrieved TrapData record was found for this barcode.");
+      throw new Error("Barcode was not found in TrapData.");
     }
-    if(result.features.length>1) throw new Error("Multiple eligible TrapData records matched this barcode. Nothing was changed.");
-    if(!state.currentUsername) throw new Error("Signed-in ArcGIS username could not be determined.");
+
+    if(result.features.length>1){
+      throw new Error("More than one TrapData record has this barcode. Nothing was changed.");
+    }
+
     const feature=result.features[0];
-    feature.attributes[f.freezerTime]=new Date();
-    feature.attributes[f.reviewedBy]=state.currentUsername;
+    const attrs=feature.attributes;
+
+    if(attrs[f.freezerTime]){
+      return {
+        status:"already",
+        attributes:attrs
+      };
+    }
+
+    if(!state.currentUsername){
+      throw new Error("Signed-in ArcGIS username could not be determined.");
+    }
+
+    attrs[f.freezerTime]=new Date();
+    attrs[f.reviewedBy]=state.currentUsername;
+
     const edits=await state.layer.applyEdits({updateFeatures:[feature]});
     const er=edits.updateFeatureResults?.[0];
-    if(!er) throw new Error("ArcGIS did not return an update result.");
-    if(er.error) throw new Error(er.error.message||"ArcGIS rejected the update.");
-    return feature.attributes;
+
+    if(!er){
+      throw new Error("ArcGIS did not return an update result.");
+    }
+
+    if(er.error){
+      throw new Error(er.error.message||"ArcGIS rejected the update.");
+    }
+
+    return {
+      status:"saved",
+      attributes:attrs
+    };
   }
 
   async function demoCheckIn(barcode){
     await new Promise(r=>setTimeout(r,350));
-    return {
+    const existing=demoRows.find(a=>normalizeBarcode(a[f.barcode])===barcode);
+    if(existing){
+      return {status:"already",attributes:existing};
+    }
+
+    const attrs={
       [f.barcode]:barcode,[f.activity]:cfg.retrievedValue||"R",[f.retrieved]:new Date(Date.now()-5400000),
       [f.location]:`SITE-${String(Math.floor(Math.random()*30)+1).padStart(3,"0")}`,
       [f.zone]:String(Math.floor(Math.random()*5)+1),[f.fieldTech]:"Demo Tech",[f.reviewedBy]:"demo_user",[f.freezerTime]:new Date()
     };
+    demoRows.unshift(attrs);
+    return {status:"saved",attributes:attrs};
   }
 
   async function processBarcode(raw,source="input"){
@@ -176,10 +219,31 @@
     state.lastScannedBarcode=barcode; state.lastScanAt=Date.now(); setBusy(true);
     setStatus("neutral","Checking…",`Validating ${barcode}`);
     try{
-      const a=state.demo?await demoCheckIn(barcode):await liveCheckIn(barcode);
-      state.sessionCount++; $("session-count").textContent=String(state.sessionCount);
-      updateLastRecord(a); addTodayRecord(a);
-      setStatus("success","VALID — SAVED",`${barcode} was freezer-checked at ${fmtShortTime(a[f.freezerTime])}.`);
+      const result=state.demo?await demoCheckIn(barcode):await liveCheckIn(barcode);
+      const a=result.attributes;
+
+      updateLastRecord(a);
+
+      if(result.status==="already"){
+        const who=a[f.reviewedBy] ? ` by ${a[f.reviewedBy]}` : "";
+        setStatus(
+          "warning",
+          "ALREADY IN FREEZER",
+          `${barcode} was freezer-checked at ${fmtDateTime(a[f.freezerTime])}${who}. No changes were made.`
+        );
+        $("barcode-input").value="";
+        return;
+      }
+
+      state.sessionCount++;
+      $("session-count").textContent=String(state.sessionCount);
+      addTodayRecord(a);
+
+      setStatus(
+        "success",
+        "VALID — SAVED",
+        `${barcode} was freezer-checked at ${fmtShortTime(a[f.freezerTime])}.`
+      );
       $("barcode-input").value="";
       if(navigator.vibrate)navigator.vibrate(80);
     }catch(err){console.error(err);setStatus("error","NOT CHECKED IN",err.message||"Unknown error.");}

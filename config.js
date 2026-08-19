@@ -1,8 +1,8 @@
 window.FREEZER_APP_CONFIG = {
   appTitle: "Lab Freezer Scanner",
   portalUrl: "https://www.arcgis.com",
-  oauthAppId: "KjDgfnd8tToLcsTA",
-  layerUrl: "https://services8.arcgis.com/V78yHC8goSD1vt01/arcgis/rest/services/FieldSeekerBarcodePrototype_Freezer_View/FeatureServer/1",
+  oauthAppId: "PASTE_ARCGIS_OAUTH_CLIENT_ID_HERE",
+  layerUrl: "PASTE_TRAPDATA_FREEZER_VIEW_LAYER_URL_HERE",
   fields: {
     barcode: "Barcode",
     activity: "TRAPACTIVITYTYPE",
@@ -13,6 +13,7 @@ window.FREEZER_APP_CONFIG = {
     reviewedBy: "REVIEWEDBY",
     freezerTime: "REVIEWEDDATE"
   },
+  // Used only for demo/sample records. Live check-in validates Barcode only.
   retrievedValue: "R",
   recentLimit: 500,
   demoWhenUnconfigured: true
