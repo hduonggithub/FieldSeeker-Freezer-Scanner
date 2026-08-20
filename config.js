@@ -10,6 +10,7 @@ window.FREEZER_APP_CONFIG = {
     location: "LOCATIONNAME",
     zone: "ZONE",
     fieldTech: "FIELDTECH",
+    creator: "created_user",
     reviewedBy: "REVIEWEDBY",
     freezerTime: "REVIEWEDDATE"
   },
