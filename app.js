@@ -9,8 +9,7 @@
     cameraFacing:"user", cameraSwitching:false,
     processing:false, todayRows:[], lastScannedBarcode:"", lastScanAt:0,
     tableSort:{key:"duration",direction:"desc"},
-    currentUsername:"", currentFullName:"",
-    creatorFieldName:""
+    currentUsername:"", currentFullName:""
   };
 
   const demoRows = [
@@ -135,24 +134,6 @@
   const escapeSql = v => String(v).replace(/'/g,"''");
   const normalizeBarcode = v => String(v||"").trim().toUpperCase();
 
-  function resolveCreatorField(){
-    if(!state.layer?.fields?.length) return "";
-
-    // Production TrapData uses created_user.
-    // Prototype TrapData uses Creator.
-    // Prefer production naming if both happen to exist.
-    const preferred=["created_user","Creator"];
-
-    for(const wanted of preferred){
-      const match=state.layer.fields.find(
-        field=>String(field.name||"").toLowerCase()===wanted.toLowerCase()
-      );
-      if(match) return match.name;
-    }
-
-    return "";
-  }
-
   function setStatus(kind,title,message){
     $("status-card").className=`status-card ${kind}`;
     $("status-icon").textContent=({neutral:"●",success:"✓",error:"✕",warning:"!"})[kind]||"●";
@@ -161,6 +142,16 @@
   function setBusy(b){
     state.processing=b; $("barcode-input").disabled=b; $("camera-control-btn").disabled=b; $("refresh-btn").disabled=b;
   }
+  function clearLastRecord(){
+    $("last-record").classList.add("hidden");
+    $("last-barcode").textContent="—";
+    $("last-location").textContent="—";
+    $("last-retrieved").textContent="—";
+    $("last-field-tech").textContent="—";
+    $("last-reviewed-by").textContent="—";
+    $("last-freezer-time").textContent="—";
+  }
+
   function updateLastRecord(a){
     $("last-record").classList.remove("hidden");
     $("last-barcode").textContent=a[f.barcode]??"—";
@@ -264,13 +255,6 @@
     state.layer=new FeatureLayer({url:cfg.layerUrl,outFields:["*"]});
     await state.layer.load();
 
-    state.creatorFieldName=resolveCreatorField();
-    if(!state.creatorFieldName){
-      console.warn("TrapData Creator field was not found. Expected created_user or Creator.");
-    }else{
-      console.info(`Freezer By source field: ${state.creatorFieldName}`);
-    }
-
     try{
       const portal=new Portal({url:cfg.portalUrl||"https://www.arcgis.com"}); await portal.load();
       if(portal.user){
@@ -344,7 +328,7 @@
     // v1.2 rule: Barcode is the only lookup/validation key.
     // 0 matches  -> barcode not found
     // 1 match + REVIEWEDDATE already set -> show existing freezer event, do not edit
-    // 1 match + REVIEWEDDATE null -> set REVIEWEDDATE + REVIEWEDBY from TrapData Creator
+    // 1 match + REVIEWEDDATE null -> set REVIEWEDDATE + REVIEWEDBY from configured Creator field
     // >1 matches -> duplicate-barcode safety stop
     const q=state.layer.createQuery();
     q.where=`${f.barcode} = '${escapeSql(barcode)}'`;
@@ -356,7 +340,7 @@
       f.location,
       f.zone,
       f.fieldTech,
-      state.creatorFieldName,
+      f.creator,
       f.reviewedBy,
       f.freezerTime
     ].filter(Boolean);
@@ -394,13 +378,13 @@
       };
     }
 
-    if(!state.creatorFieldName){
-      throw new Error("TrapData Creator field was not found. Expected created_user or Creator.");
+    if(!f.creator){
+      throw new Error("Creator field is not configured in config.js.");
     }
 
-    const trapCreator=String(attrs[state.creatorFieldName]??"").trim();
+    const trapCreator=String(attrs[f.creator]??"").trim();
     if(!trapCreator){
-      throw new Error(`TrapData ${state.creatorFieldName} is blank. Nothing was changed.`);
+      throw new Error(`Configured Creator field ${f.creator} is blank. Nothing was changed.`);
     }
 
     attrs[f.freezerTime]=new Date();
@@ -443,6 +427,7 @@
     const barcode=normalizeBarcode(raw); if(!barcode||state.processing)return;
     if(source==="camera"&&barcode===state.lastScannedBarcode&&Date.now()-state.lastScanAt<5000)return;
     state.lastScannedBarcode=barcode; state.lastScanAt=Date.now(); setBusy(true);
+    clearLastRecord();
     setStatus("neutral","Checking…",`Validating ${barcode}`);
     try{
       const result=state.demo?await demoCheckIn(barcode):await liveCheckIn(barcode);
@@ -484,7 +469,8 @@
       if(navigator.vibrate)navigator.vibrate(80);
     }catch(err){
       console.error(err);
-      setStatus("error","NOT CHECKED IN",err.message||"Unknown error.");
+      const reason=err.message||"Unknown error.";
+      setStatus("error","NOT CHECKED IN",`${barcode}: ${reason}`);
       const infoGroup=$("scan-info-group");
       if(infoGroup) infoGroup.open=true;
     }

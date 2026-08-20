@@ -1,4 +1,4 @@
-# FieldSeeker Freezer Scanner v1.15
+# FieldSeeker Freezer Scanner v1.16
 
 ## What v1 does
 - Scan/enter Trap Barcode
@@ -333,3 +333,43 @@ This allows a shared/dedicated lab ArcGIS account to remain signed into the free
 The signed-in ArcGIS account is still required for permission to query and update the feature layer, but it is no longer used as the value written into `REVIEWEDBY`.
 
 If neither `created_user` nor `Creator` exists, or if the detected Creator value is blank, the app refuses the freezer update and shows an error rather than writing the shared lab username.
+
+
+## v1.16 explicit Creator field + scan cleanup
+
+The app no longer auto-detects `Creator` versus `created_user`.
+
+The source field for **Freezer By** is defined explicitly in `config.js`:
+
+```javascript
+fields: {
+  ...
+  creator: "Creator",
+  reviewedBy: "REVIEWEDBY",
+  freezerTime: "REVIEWEDDATE"
+}
+```
+
+For the production TrapData layer, change only:
+
+```javascript
+creator: "created_user"
+```
+
+### Failed scan behavior
+
+At the start of every new scan, the previous **Trap Information** is cleared.
+
+If the new barcode is not found, the previous trap no longer remains visible.
+
+The error message also includes the scanned barcode, for example:
+
+```text
+NOT CHECKED IN
+T260000001: Barcode was not found in TrapData.
+```
+
+If the barcode exists, the current matching Trap Information is shown for:
+- successful freezer check-in,
+- already in freezer,
+- not retrieved.
