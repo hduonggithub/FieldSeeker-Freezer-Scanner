@@ -85,8 +85,10 @@
     if(period==="today") return startOfLocalDay(now);
     if(period==="this-week") return startOfLocalWeek(now);
     if(period==="last-7-days") return new Date(now.getTime()-(7*24*60*60*1000));
-    if(period==="last-30-days") return new Date(now.getTime()-(30*24*60*60*1000));
-    return null;
+
+    // Hard maximum for the Traps Added list.
+    // Any unknown/missing value also falls back to 30 days.
+    return new Date(now.getTime()-(30*24*60*60*1000));
   }
 
   function matchesSelectedPeriod(value){
@@ -261,12 +263,10 @@
     const period=$("period-filter")?.value || "this-week";
     const start=periodStart(period);
 
-    if(start){
-      const startUtc=formatArcgisUtcTimestamp(start);
-      q.where=`${f.freezerTime} >= TIMESTAMP '${startUtc}'`;
-    }else{
-      q.where=`${f.freezerTime} IS NOT NULL`;
-    }
+    // The Traps Added list ONLY contains records that already have
+    // a Freezer Time (REVIEWEDDATE), and never queries more than 30 days.
+    const startUtc=formatArcgisUtcTimestamp(start);
+    q.where=`${f.freezerTime} IS NOT NULL AND ${f.freezerTime} >= TIMESTAMP '${startUtc}'`;
 
     q.outFields=[state.layer.objectIdField,f.barcode,f.activity,f.retrieved,f.location,f.zone,f.fieldTech,f.reviewedBy,f.freezerTime].filter(Boolean);
     q.returnGeometry=false;

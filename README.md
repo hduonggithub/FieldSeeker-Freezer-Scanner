@@ -1,4 +1,4 @@
-# FieldSeeker Freezer Scanner v1.12
+# FieldSeeker Freezer Scanner v1.13
 
 ## What v1 does
 - Scan/enter Trap Barcode
@@ -274,3 +274,25 @@ Sortable columns:
 - Freezer Time
 - Time in Freezer
 - Freezer By
+
+
+## v1.13 Traps Added query limit
+
+The **Traps Added** list now only queries records that already have a Freezer Time:
+
+```sql
+REVIEWEDDATE IS NOT NULL
+```
+
+The period filter is limited to:
+
+- Today
+- This Week (default)
+- Last 7 Days
+- Last 30 Days
+
+The **All** option was removed.
+
+Even if the UI or config passes an unexpected period value, the app falls back to a hard **30-day maximum**, so the freezer list never queries the full TrapData history.
+
+The barcode scan lookup is unchanged and still searches the full TrapData layer by exact barcode so an older valid trap can still be found.
