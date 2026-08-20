@@ -170,3 +170,4 @@ tbody tr:first-child td{background:#fbfdfc}tbody tr:hover td{background:#f7faf8}
     display:none !important;
   }
 }
+\n\n/* v1.8 — no Check In button; camera control is beside Barcode */\n.scan-input-row{\n  grid-template-columns:minmax(0,1fr) auto;\n  align-items:stretch;\n}\n.barcode-camera-actions{\n  display:flex;\n  align-items:stretch;\n  gap:6px;\n}\n.barcode-camera-actions .icon-button{\n  min-width:52px;\n  min-height:46px;\n  height:100%;\n}\n.camera-status-row{\n  display:block;\n  margin-top:14px;\n}\n.camera-status-row .status-card{\n  width:100%;\n  margin-top:0;\n}\n@media(max-width:600px){\n  .scan-input-row{grid-template-columns:minmax(0,1fr) auto;}\n  .barcode-camera-actions .icon-button{min-width:50px;}\n}\n

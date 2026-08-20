@@ -137,7 +137,7 @@
     $("status-title").textContent=title; $("status-message").textContent=message;
   }
   function setBusy(b){
-    state.processing=b; $("submit-barcode-btn").disabled=b; $("barcode-input").disabled=b; $("refresh-btn").disabled=b;
+    state.processing=b; $("barcode-input").disabled=b; $("camera-control-btn").disabled=b; $("refresh-btn").disabled=b;
   }
   function updateLastRecord(a){
     $("last-record").classList.remove("hidden");
@@ -455,7 +455,6 @@
   }
 
   function wireEvents(){
-    $("submit-barcode-btn").addEventListener("click",()=>processBarcode($("barcode-input").value));
     $("barcode-input").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();processBarcode(e.currentTarget.value);}});
     $("camera-control-btn").addEventListener("click",cameraControl);
     $("camera-close-btn").addEventListener("click",()=>stopCamera());

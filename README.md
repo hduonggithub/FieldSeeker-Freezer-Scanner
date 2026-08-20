@@ -1,4 +1,4 @@
-# FieldSeeker Freezer Scanner v1.6
+# FieldSeeker Freezer Scanner v1.8
 
 ## What v1 does
 - Scan/enter Trap Barcode
@@ -191,3 +191,36 @@ The panel is now titled **Traps Added** and has a **Period** filter:
 - All
 
 Changing the period triggers a new ArcGIS query; the app does not have to load all historical TrapData each time. Barcode scan lookup itself remains unrestricted by period.
+
+
+## v1.7 compact camera/status row
+
+The camera control and scan status are now on the same horizontal row:
+
+```text
+[ 📷 ]   ●  Ready
+         Scan the first trap.
+```
+
+When the camera is open, the same camera button becomes the switch-camera button:
+
+```text
+[ 🔄 ] [ ✕ ]   ●  Front camera ready
+               Scan a trap barcode.
+```
+
+After any barcode is decoded, the camera closes and the result remains visible in that same row.
+
+
+## v1.8 camera beside barcode
+
+The separate **Check In** button has been removed.
+
+```text
+[ Scan or type barcode                         ] [ 📷 ]
+```
+
+- Manual entry: press **Enter**.
+- Bluetooth/USB barcode scanner: scan + Enter submits automatically.
+- Camera: tap **📷**. While open, the same button becomes **🔄** to switch cameras and **✕** closes it manually.
+- After any barcode is decoded, the camera closes and the result is shown.
