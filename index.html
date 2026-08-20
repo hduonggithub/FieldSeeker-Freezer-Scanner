@@ -103,7 +103,7 @@
         <button id="refresh-btn" class="button ghost" type="button">Refresh</button>
       </div>
 
-      <div class="list-controls three-controls">
+      <div class="list-controls two-controls">
         <label>Period
           <select id="period-filter">
             <option value="today">Today</option>
@@ -114,27 +114,26 @@
           </select>
         </label>
         <label>Search<input id="table-search" type="search" placeholder="Barcode or location" /></label>
-        <label>Sort
-          <select id="sort-select">
-            <option value="freezer-desc">Freezer time — newest</option>
-            <option value="freezer-asc">Freezer time — oldest</option>
-            <option value="duration-desc">Time in freezer — longest</option>
-            <option value="duration-asc">Time in freezer — shortest</option>
-            <option value="barcode-asc">Barcode</option>
-            <option value="location-asc">Location</option>
-          </select>
-        </label>
       </div>
 
       <div class="table-wrap">
         <table>
-          <thead><tr><th>Barcode</th><th>Location</th><th>Retrieved</th><th>Freezer Time</th><th>Time in Freezer</th><th>Freezer By</th></tr></thead>
+          <thead>
+            <tr>
+              <th><button class="sort-header" data-sort="barcode" type="button">Barcode <span class="sort-indicator"></span></button></th>
+              <th><button class="sort-header" data-sort="location" type="button">Location <span class="sort-indicator"></span></button></th>
+              <th><button class="sort-header" data-sort="retrieved" type="button">Retrieved <span class="sort-indicator"></span></button></th>
+              <th><button class="sort-header" data-sort="freezer" type="button">Freezer Time <span class="sort-indicator"></span></button></th>
+              <th><button class="sort-header active" data-sort="duration" type="button">Time in Freezer <span class="sort-indicator">▼</span></button></th>
+              <th><button class="sort-header" data-sort="reviewedBy" type="button">Freezer By <span class="sort-indicator"></span></button></th>
+            </tr>
+          </thead>
           <tbody id="trap-table-body"><tr><td colspan="6" class="empty-row">Loading…</td></tr></tbody>
         </table>
       </div>
     </section>
   </main>
 
-  <footer>FieldSeeker Freezer Scanner v1.11</footer>
+  <footer>FieldSeeker Freezer Scanner v1.12</footer>
 </body>
 </html>

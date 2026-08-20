@@ -1,4 +1,4 @@
-# FieldSeeker Freezer Scanner v1.11
+# FieldSeeker Freezer Scanner v1.12
 
 ## What v1 does
 - Scan/enter Trap Barcode
@@ -251,3 +251,26 @@ Tap **i** to show the instructions; tap it again to close them. The normal scann
 ## v1.11 instruction popover fix
 
 Fixed the info popover text wrapping. Inline emphasis such as **Enter** and **Retrieved** now stays on the same sentence line instead of forcing line breaks.
+
+
+## v1.12 sortable table headers
+
+The separate **Sort** dropdown was removed.
+
+Click a table header to sort by that field. Click the same header again to reverse the direction.
+
+The default is:
+
+```text
+Time in Freezer ▼
+```
+
+which means **longest time in freezer first**.
+
+Sortable columns:
+- Barcode
+- Location
+- Retrieved
+- Freezer Time
+- Time in Freezer
+- Freezer By

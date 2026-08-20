@@ -273,3 +273,49 @@ tbody tr:first-child td{background:#fbfdfc}tbody tr:hover td{background:#f7faf8}
     left:-36px;
   }
 }
+
+
+/* v1.12 — sortable headers replace the Sort dropdown */
+.list-controls.two-controls{
+  grid-template-columns:minmax(170px,.65fr) minmax(220px,1.35fr);
+}
+
+.sort-header{
+  appearance:none;
+  border:0;
+  background:transparent;
+  color:inherit;
+  font:inherit;
+  font-weight:700;
+  padding:0;
+  margin:0;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  white-space:nowrap;
+}
+
+.sort-header:hover,
+.sort-header.active{
+  color:var(--accent-dark);
+}
+
+.sort-header:focus{
+  outline:2px solid rgba(23,107,71,.22);
+  outline-offset:3px;
+  border-radius:4px;
+}
+
+.sort-indicator{
+  display:inline-block;
+  min-width:10px;
+  font-size:.68rem;
+  line-height:1;
+}
+
+@media(max-width:600px){
+  .list-controls.two-controls{
+    grid-template-columns:1fr;
+  }
+}

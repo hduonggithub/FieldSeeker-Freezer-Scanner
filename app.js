@@ -8,6 +8,7 @@
     demo:false, layer:null, identityManager:null, scanner:null, cameraRunning:false, cameraDecodeLocked:false,
     cameraFacing:"user", cameraSwitching:false,
     processing:false, todayRows:[], lastScannedBarcode:"", lastScanAt:0,
+    tableSort:{key:"duration",direction:"desc"},
     currentUsername:"", currentFullName:""
   };
 
@@ -150,20 +151,70 @@
   }
   const rowAttrs = r => r.attributes || r;
 
+  function updateSortIndicators(){
+    document.querySelectorAll(".sort-header").forEach(btn=>{
+      const active=btn.dataset.sort===state.tableSort.key;
+      const indicator=btn.querySelector(".sort-indicator");
+
+      btn.classList.toggle("active",active);
+      btn.setAttribute(
+        "aria-sort",
+        active
+          ? (state.tableSort.direction==="asc" ? "ascending" : "descending")
+          : "none"
+      );
+
+      if(indicator){
+        indicator.textContent=active
+          ? (state.tableSort.direction==="asc" ? "▲" : "▼")
+          : "";
+      }
+    });
+  }
+
   function renderTable(){
-    const tbody=$("trap-table-body"), search=$("table-search").value.trim().toLowerCase(), sort=$("sort-select").value;
+    const tbody=$("trap-table-body"), search=$("table-search").value.trim().toLowerCase();
+    const sort=state.tableSort;
     let rows=state.todayRows.map(rowAttrs).filter(a=>matchesSelectedPeriod(a[f.freezerTime]));
     $("today-count").textContent=String(rows.length);
     $("period-count-label").textContent=selectedPeriodLabel();
     if(search) rows=rows.filter(a=>String(a[f.barcode]??"").toLowerCase().includes(search)||String(a[f.location]??"").toLowerCase().includes(search));
     rows.sort((a,b)=>{
-      const fa=asDate(a[f.freezerTime])?.getTime()||0, fb=asDate(b[f.freezerTime])?.getTime()||0;
-      if(sort==="freezer-asc"||sort==="duration-desc") return fa-fb;
-      if(sort==="duration-asc"||sort==="freezer-desc") return fb-fa;
-      if(sort==="barcode-asc") return String(a[f.barcode]??"").localeCompare(String(b[f.barcode]??""));
-      if(sort==="location-asc") return String(a[f.location]??"").localeCompare(String(b[f.location]??""));
-      return fb-fa;
+      const freezerA=asDate(a[f.freezerTime])?.getTime()||0;
+      const freezerB=asDate(b[f.freezerTime])?.getTime()||0;
+      const retrievedA=asDate(a[f.retrieved])?.getTime()||0;
+      const retrievedB=asDate(b[f.retrieved])?.getTime()||0;
+
+      let cmp=0;
+
+      switch(sort.key){
+        case "barcode":
+          cmp=String(a[f.barcode]??"").localeCompare(String(b[f.barcode]??""));
+          break;
+        case "location":
+          cmp=String(a[f.location]??"").localeCompare(String(b[f.location]??""));
+          break;
+        case "retrieved":
+          cmp=retrievedA-retrievedB;
+          break;
+        case "freezer":
+          cmp=freezerA-freezerB;
+          break;
+        case "duration":
+          // Longer freezer duration means an older Freezer Time.
+          cmp=freezerB-freezerA;
+          break;
+        case "reviewedBy":
+          cmp=String(a[f.reviewedBy]??"").localeCompare(String(b[f.reviewedBy]??""));
+          break;
+        default:
+          cmp=freezerB-freezerA;
+      }
+
+      return sort.direction==="asc" ? cmp : -cmp;
     });
+
+    updateSortIndicators();
     if(!rows.length){tbody.innerHTML='<tr><td colspan="6" class="empty-row">No matching freezer check-ins for this period.</td></tr>';return;}
     tbody.innerHTML="";
     rows.forEach(a=>{
@@ -465,7 +516,28 @@
     $("camera-close-btn").addEventListener("click",()=>stopCamera());
     $("refresh-btn").addEventListener("click",async()=>{try{await loadTodayRows();setStatus("neutral","Ready","List refreshed.");}catch(err){setStatus("error","Refresh failed",err.message||"Could not refresh.");}});
     $("table-search").addEventListener("input",renderTable);
-    $("sort-select").addEventListener("change",renderTable);
+
+    document.querySelectorAll(".sort-header").forEach(btn=>{
+      btn.addEventListener("click",()=>{
+        const key=btn.dataset.sort;
+
+        if(state.tableSort.key===key){
+          state.tableSort.direction=state.tableSort.direction==="asc" ? "desc" : "asc";
+        }else{
+          state.tableSort.key=key;
+
+          // Natural defaults for a newly selected column.
+          if(key==="barcode" || key==="location" || key==="reviewedBy"){
+            state.tableSort.direction="asc";
+          }else{
+            state.tableSort.direction="desc";
+          }
+        }
+
+        renderTable();
+      });
+    });
+
     $("period-filter").addEventListener("change",async()=>{
       try{
         setStatus("neutral","Loading…",`Loading ${selectedPeriodLabel().toLowerCase()} freezer check-ins.`);
