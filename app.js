@@ -253,19 +253,24 @@
     const icon=$("status-icon");
     icon.textContent=({neutral:"●",success:"✓",error:"✕",warning:"!"})[kind]||"●";
 
-    const canReset=kind==="error";
-    icon.classList.toggle("status-reset",canReset);
-    icon.setAttribute("role",canReset ? "button" : "img");
-    icon.setAttribute("tabindex",canReset ? "0" : "-1");
-    icon.setAttribute("aria-label",canReset ? "Clear message and return to Ready" : "");
+    // Result/status icon is informational only.
+    icon.classList.remove("status-reset");
+    icon.setAttribute("role","img");
+    icon.setAttribute("tabindex","-1");
+    icon.setAttribute("aria-label","");
+
+    // Show a dedicated close button for completed result/error messages.
+    // Neutral states such as Ready and Checking do not need a close control.
+    const closeBtn=$("status-close-btn");
+    if(closeBtn){
+      closeBtn.classList.toggle("hidden",kind==="neutral");
+    }
 
     $("status-title").textContent=title;
     $("status-message").textContent=message;
   }
 
   function resetScanStatus(){
-    if(!$("status-card").classList.contains("error")) return;
-
     $("barcode-input").value="";
     clearLastRecord();
     setStatus("neutral","Ready","Scan the next trap.");
@@ -715,21 +720,12 @@
       }
     });
 
-    $("status-icon").addEventListener("click",e=>{
-      if(!$("status-card").classList.contains("error")) return;
+    $("status-close-btn").addEventListener("click",e=>{
       e.preventDefault();
       e.stopPropagation();
       resetScanStatus();
     });
 
-    $("status-icon").addEventListener("keydown",e=>{
-      if(!$("status-card").classList.contains("error")) return;
-      if(e.key==="Enter" || e.key===" "){
-        e.preventDefault();
-        e.stopPropagation();
-        resetScanStatus();
-      }
-    });
     $("sound-toggle-btn").addEventListener("click",toggleSound);
 
     $("camera-control-btn").addEventListener("click",()=>{

@@ -1,4 +1,4 @@
-# FieldSeeker Freezer Scanner v1.18
+# FieldSeeker Freezer Scanner v1.19
 
 ## What v1 does
 - Scan/enter Trap Barcode
@@ -408,3 +408,24 @@ A speaker button beside **Freezer Check-In** toggles sound:
 The mute preference is saved in browser local storage, so the shared freezer device remembers it between visits.
 
 The tones are generated with the browser Web Audio API. No MP3 or WAV files are required.
+
+
+## v1.19 close button for all completed messages
+
+The status area now has a dedicated `×` close button for every completed non-neutral message, including:
+
+- **VALID — SAVED**
+- **ALREADY IN FREEZER**
+- **NOT RETRIEVED**
+- **NOT CHECKED IN**
+- other status errors such as camera/query failures
+
+Clicking/tapping `×`:
+
+- clears the barcode text box,
+- clears displayed Trap Information,
+- collapses the status/details group,
+- returns to **Ready — Scan the next trap**,
+- puts focus back in the barcode box.
+
+The left status symbol (`✓`, `!`, or `✕`) is now informational only. The close control is always the small `×` on the right.
