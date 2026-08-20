@@ -1,4 +1,4 @@
-# FieldSeeker Freezer Scanner v1.17
+# FieldSeeker Freezer Scanner v1.18
 
 ## What v1 does
 - Scan/enter Trap Barcode
@@ -388,3 +388,23 @@ Clicking/tapping the `✕`:
 - puts focus back in the barcode box.
 
 The `✕` is only interactive while the status is an error.
+
+
+## v1.18 scan-result sounds
+
+Scan sounds are enabled by default.
+
+Result tones:
+- **VALID — SAVED:** one short high confirmation beep
+- **ALREADY IN FREEZER:** two short beeps
+- **NOT RETRIEVED / NOT CHECKED IN / scan validation error:** one lower, longer beep
+
+The success beep is played only after the ArcGIS update succeeds.
+
+A speaker button beside **Freezer Check-In** toggles sound:
+- `🔊` sound on
+- `🔇` sound muted
+
+The mute preference is saved in browser local storage, so the shared freezer device remembers it between visits.
+
+The tones are generated with the browser Web Audio API. No MP3 or WAV files are required.

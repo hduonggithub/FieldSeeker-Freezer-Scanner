@@ -9,7 +9,8 @@
     cameraFacing:"user", cameraSwitching:false,
     processing:false, todayRows:[], lastScannedBarcode:"", lastScanAt:0,
     tableSort:{key:"duration",direction:"desc"},
-    currentUsername:"", currentFullName:""
+    currentUsername:"", currentFullName:"",
+    soundEnabled:true, audioContext:null
   };
 
   const demoRows = [
@@ -133,6 +134,118 @@
   }
   const escapeSql = v => String(v).replace(/'/g,"''");
   const normalizeBarcode = v => String(v||"").trim().toUpperCase();
+
+  function updateSoundButton(){
+    const btn=$("sound-toggle-btn");
+    if(!btn) return;
+
+    btn.textContent=state.soundEnabled ? "🔊" : "🔇";
+    btn.classList.toggle("muted",!state.soundEnabled);
+    btn.setAttribute("aria-label",state.soundEnabled ? "Mute scan sounds" : "Enable scan sounds");
+    btn.title=state.soundEnabled ? "Mute scan sounds" : "Enable scan sounds";
+  }
+
+  function ensureAudioContext(){
+    if(state.audioContext) return state.audioContext;
+
+    const AudioContextClass=window.AudioContext || window.webkitAudioContext;
+    if(!AudioContextClass) return null;
+
+    try{
+      state.audioContext=new AudioContextClass();
+    }catch(_){
+      state.audioContext=null;
+    }
+
+    return state.audioContext;
+  }
+
+  function primeAudio(){
+    if(!state.soundEnabled) return;
+    const ctx=ensureAudioContext();
+    if(!ctx) return;
+
+    if(ctx.state==="suspended"){
+      ctx.resume().catch(()=>{});
+    }
+  }
+
+  function scheduleTone(ctx,frequency,start,duration,volume=0.055){
+    const osc=ctx.createOscillator();
+    const gain=ctx.createGain();
+
+    osc.type="sine";
+    osc.frequency.setValueAtTime(frequency,start);
+
+    gain.gain.setValueAtTime(0.0001,start);
+    gain.gain.exponentialRampToValueAtTime(volume,start+0.012);
+    gain.gain.setValueAtTime(volume,Math.max(start+0.013,start+duration-0.025));
+    gain.gain.exponentialRampToValueAtTime(0.0001,start+duration);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(start);
+    osc.stop(start+duration+0.02);
+  }
+
+  function playScanSound(kind){
+    if(!state.soundEnabled) return;
+
+    const ctx=ensureAudioContext();
+    if(!ctx) return;
+
+    const play=()=>{
+      const now=ctx.currentTime+0.015;
+
+      if(kind==="success"){
+        // One short, bright confirmation tone.
+        scheduleTone(ctx,880,now,0.10,0.06);
+      }else if(kind==="already"){
+        // Two short tones so "already checked in" sounds different from success.
+        scheduleTone(ctx,620,now,0.075,0.05);
+        scheduleTone(ctx,620,now+0.13,0.075,0.05);
+      }else if(kind==="error"){
+        // One lower, longer tone for not found / not retrieved / rejected.
+        scheduleTone(ctx,250,now,0.23,0.055);
+      }
+    };
+
+    if(ctx.state==="suspended"){
+      ctx.resume().then(play).catch(()=>{});
+    }else{
+      play();
+    }
+  }
+
+  function toggleSound(){
+    state.soundEnabled=!state.soundEnabled;
+
+    try{
+      localStorage.setItem(
+        "fieldseekerFreezerSound",
+        state.soundEnabled ? "on" : "off"
+      );
+    }catch(_){}
+
+    updateSoundButton();
+
+    if(state.soundEnabled){
+      primeAudio();
+      // Tiny confirmation tone when sound is turned back on.
+      const ctx=ensureAudioContext();
+      if(ctx){
+        const confirm=()=>{
+          scheduleTone(ctx,760,ctx.currentTime+0.015,0.07,0.04);
+        };
+        if(ctx.state==="suspended"){
+          ctx.resume().then(confirm).catch(()=>{});
+        }else{
+          confirm();
+        }
+      }
+    }
+  }
 
   function setStatus(kind,title,message){
     $("status-card").className=`status-card ${kind}`;
@@ -468,6 +581,7 @@
           `${barcode} was freezer-checked at ${fmtDateTime(a[f.freezerTime])}${who}. No changes were made.`
         );
         $("barcode-input").value="";
+        playScanSound("already");
         return;
       }
 
@@ -478,6 +592,7 @@
           `${barcode} exists, but it has not been marked Retrieved with a Retrieve time. It was not added to the freezer.`
         );
         $("barcode-input").value="";
+        playScanSound("error");
         return;
       }
 
@@ -489,11 +604,13 @@
         `${barcode} was freezer-checked at ${fmtShortTime(a[f.freezerTime])}.`
       );
       $("barcode-input").value="";
+      playScanSound("success");
       if(navigator.vibrate)navigator.vibrate(80);
     }catch(err){
       console.error(err);
       const reason=err.message||"Unknown error.";
       setStatus("error","NOT CHECKED IN",`${barcode}: ${reason}`);
+      playScanSound("error");
       const infoGroup=$("scan-info-group");
       if(infoGroup) infoGroup.open=true;
     }
@@ -590,7 +707,13 @@
   }
 
   function wireEvents(){
-    $("barcode-input").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();processBarcode(e.currentTarget.value);}});
+    $("barcode-input").addEventListener("keydown",e=>{
+      if(e.key==="Enter"){
+        e.preventDefault();
+        primeAudio();
+        processBarcode(e.currentTarget.value);
+      }
+    });
 
     $("status-icon").addEventListener("click",e=>{
       if(!$("status-card").classList.contains("error")) return;
@@ -607,7 +730,12 @@
         resetScanStatus();
       }
     });
-    $("camera-control-btn").addEventListener("click",cameraControl);
+    $("sound-toggle-btn").addEventListener("click",toggleSound);
+
+    $("camera-control-btn").addEventListener("click",()=>{
+      primeAudio();
+      cameraControl();
+    });
     $("camera-close-btn").addEventListener("click",()=>stopCamera());
     $("refresh-btn").addEventListener("click",async()=>{try{await loadTodayRows();setStatus("neutral","Ready","List refreshed.");}catch(err){setStatus("error","Refresh failed",err.message||"Could not refresh.");}});
     $("table-search").addEventListener("input",renderTable);
@@ -652,9 +780,14 @@
     try{
       const savedFacing=localStorage.getItem("fieldseekerFreezerCameraFacing");
       if(savedFacing==="user" || savedFacing==="environment") state.cameraFacing=savedFacing;
+
+      const savedSound=localStorage.getItem("fieldseekerFreezerSound");
+      state.soundEnabled=savedSound!=="off";
     }catch(_){}
+
     $("period-filter").value="this-week";
     updateCameraButtons();
+    updateSoundButton();
     wireEvents();
     if(!configured()&&cfg.demoWhenUnconfigured!==false){
       state.demo=true;$("demo-banner").classList.remove("hidden");$("connection-label").textContent="Demo mode";
