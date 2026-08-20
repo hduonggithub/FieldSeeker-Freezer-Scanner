@@ -171,3 +171,79 @@ tbody tr:first-child td{background:#fbfdfc}tbody tr:hover td{background:#f7faf8}
   }
 }
 \n\n/* v1.8 — no Check In button; camera control is beside Barcode */\n.scan-input-row{\n  grid-template-columns:minmax(0,1fr) auto;\n  align-items:stretch;\n}\n.barcode-camera-actions{\n  display:flex;\n  align-items:stretch;\n  gap:6px;\n}\n.barcode-camera-actions .icon-button{\n  min-width:52px;\n  min-height:46px;\n  height:100%;\n}\n.camera-status-row{\n  display:block;\n  margin-top:14px;\n}\n.camera-status-row .status-card{\n  width:100%;\n  margin-top:0;\n}\n@media(max-width:600px){\n  .scan-input-row{grid-template-columns:minmax(0,1fr) auto;}\n  .barcode-camera-actions .icon-button{min-width:50px;}\n}\n\n\n/* v1.9 — simplified scanner panel: no Session chip; status + trap info in one expandable group */\n.compact-heading{\n  margin-bottom:12px;\n}\n\n.scan-info-group{\n  margin-top:14px;\n  border:1px solid var(--border);\n  border-radius:14px;\n  overflow:hidden;\n  background:#fff;\n}\n.scan-info-group > summary{\n  list-style:none;\n  cursor:pointer;\n  position:relative;\n}\n.scan-info-group > summary::-webkit-details-marker{display:none;}\n.scan-info-group > summary::after{\n  content:"▸";\n  position:absolute;\n  right:13px;\n  top:50%;\n  transform:translateY(-50%);\n  color:var(--muted);\n  font-size:1.05rem;\n}\n.scan-info-group[open] > summary::after{content:"▾";}\n.scan-info-group .status-card{\n  margin:0;\n  min-height:66px;\n  border:0;\n  border-radius:0;\n  padding:11px 42px 11px 13px;\n}\n.scan-info-body{\n  border-top:1px solid var(--border);\n  padding:11px 13px 13px;\n}\n.scan-rules{\n  margin:0;\n  color:var(--muted);\n  font-size:.86rem;\n}\n.scan-info-group .last-record{\n  margin-top:10px;\n  padding-top:10px;\n}\n.session-chip{display:none!important;}\n\n@media(max-width:600px){\n  .scan-info-group .status-card{\n    min-height:62px;\n    padding:9px 38px 9px 10px;\n  }\n  .scan-info-body{padding:10px;}\n}\n
+
+/* v1.10 — instructions moved behind an info button beside the section title */
+.freezer-heading{
+  margin-bottom:12px;
+}
+
+.title-with-info{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  position:relative;
+}
+
+.title-with-info h2{
+  margin:0;
+}
+
+.freezer-help{
+  position:relative;
+}
+
+.freezer-help > summary{
+  list-style:none;
+  width:28px;
+  height:28px;
+  border:1px solid var(--border);
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:#fff;
+  color:var(--accent-dark);
+  font-family:Georgia, "Times New Roman", serif;
+  font-style:italic;
+  font-weight:700;
+  cursor:pointer;
+  user-select:none;
+}
+
+.freezer-help > summary::-webkit-details-marker{
+  display:none;
+}
+
+.freezer-help > summary:hover,
+.freezer-help[open] > summary{
+  background:var(--accent-soft);
+  border-color:#a9d2ba;
+}
+
+.freezer-help-popover{
+  position:absolute;
+  z-index:30;
+  top:36px;
+  left:0;
+  width:min(360px, calc(100vw - 56px));
+  padding:12px 14px;
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:var(--panel);
+  box-shadow:var(--shadow);
+  font-size:.88rem;
+  color:var(--text);
+}
+
+.freezer-help-popover strong{
+  display:block;
+  margin-bottom:7px;
+}
+
+.freezer-help-popover p{
+  margin:0;
+}
+
+.freezer-help-popover p + p{
+  margin-top:7px;
+}

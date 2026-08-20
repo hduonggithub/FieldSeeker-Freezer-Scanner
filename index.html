@@ -34,9 +34,19 @@
 
   <main class="app-grid">
     <section class="scanner-panel">
-      <div class="section-heading compact-heading">
-        <div>
+      <div class="section-heading compact-heading freezer-heading">
+        <div class="title-with-info">
           <h2>Freezer Check-In</h2>
+          <details class="freezer-help">
+            <summary aria-label="Freezer Check-In instructions" title="Instructions">i</summary>
+            <div class="freezer-help-popover">
+              <strong>How to use</strong>
+              <p>Type or scan a barcode and press <strong>Enter</strong>, or tap the camera button.</p>
+              <p>Only <strong>Retrieved</strong> traps are accepted.</p>
+              <p>If a trap is already in the freezer, its existing Freezer Time is shown and is not changed.</p>
+              <p>A successful check-in records the current Freezer Time and the signed-in ArcGIS user.</p>
+            </div>
+          </details>
         </div>
       </div>
 
@@ -50,7 +60,6 @@
             <button id="camera-close-btn" class="icon-button close-camera-button hidden" type="button" aria-label="Close camera" title="Close camera">✕</button>
           </div>
         </div>
-        <p class="helper">Press <strong>Enter</strong> for a typed/scanner code, or tap the camera.</p>
       </div>
 
       <details id="scan-info-group" class="scan-info-group">
@@ -65,8 +74,6 @@
         </summary>
 
         <div class="scan-info-body">
-          <p class="scan-rules">Only <strong>Retrieved</strong> traps are accepted. A trap already in the freezer is shown but never updated again.</p>
-
           <div id="last-record" class="last-record hidden">
             <div class="last-record-title">Trap Information</div>
             <dl>
@@ -128,6 +135,6 @@
     </section>
   </main>
 
-  <footer>FieldSeeker Freezer Scanner v1.9</footer>
+  <footer>FieldSeeker Freezer Scanner v1.10</footer>
 </body>
 </html>

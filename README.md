@@ -1,4 +1,4 @@
-# FieldSeeker Freezer Scanner v1.9
+# FieldSeeker Freezer Scanner v1.10
 
 ## What v1 does
 - Scan/enter Trap Barcode
@@ -233,3 +233,16 @@ The separate **Check In** button has been removed.
 - The group is compact while idle.
 - It automatically expands after a barcode result so the operator can see trap details.
 - The operator can collapse it again by tapping the status row.
+
+
+## v1.10 instruction cleanup
+
+The always-visible operating instructions were removed from the scanner panel.
+
+The title now shows a circular info control:
+
+```text
+Freezer Check-In  (i)
+```
+
+Tap **i** to show the instructions; tap it again to close them. The normal scanner interface stays compact.
