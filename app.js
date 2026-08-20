@@ -9,7 +9,8 @@
     cameraFacing:"user", cameraSwitching:false,
     processing:false, todayRows:[], lastScannedBarcode:"", lastScanAt:0,
     tableSort:{key:"duration",direction:"desc"},
-    currentUsername:"", currentFullName:""
+    currentUsername:"", currentFullName:"",
+    creatorFieldName:""
   };
 
   const demoRows = [
@@ -134,6 +135,24 @@
   const escapeSql = v => String(v).replace(/'/g,"''");
   const normalizeBarcode = v => String(v||"").trim().toUpperCase();
 
+  function resolveCreatorField(){
+    if(!state.layer?.fields?.length) return "";
+
+    // Production TrapData uses created_user.
+    // Prototype TrapData uses Creator.
+    // Prefer production naming if both happen to exist.
+    const preferred=["created_user","Creator"];
+
+    for(const wanted of preferred){
+      const match=state.layer.fields.find(
+        field=>String(field.name||"").toLowerCase()===wanted.toLowerCase()
+      );
+      if(match) return match.name;
+    }
+
+    return "";
+  }
+
   function setStatus(kind,title,message){
     $("status-card").className=`status-card ${kind}`;
     $("status-icon").textContent=({neutral:"●",success:"✓",error:"✕",warning:"!"})[kind]||"●";
@@ -244,6 +263,14 @@
     identityManager.registerOAuthInfos([new OAuthInfo({appId:cfg.oauthAppId,portalUrl:cfg.portalUrl||"https://www.arcgis.com",popup:false})]);
     state.layer=new FeatureLayer({url:cfg.layerUrl,outFields:["*"]});
     await state.layer.load();
+
+    state.creatorFieldName=resolveCreatorField();
+    if(!state.creatorFieldName){
+      console.warn("TrapData Creator field was not found. Expected created_user or Creator.");
+    }else{
+      console.info(`Freezer By source field: ${state.creatorFieldName}`);
+    }
+
     try{
       const portal=new Portal({url:cfg.portalUrl||"https://www.arcgis.com"}); await portal.load();
       if(portal.user){
@@ -317,7 +344,7 @@
     // v1.2 rule: Barcode is the only lookup/validation key.
     // 0 matches  -> barcode not found
     // 1 match + REVIEWEDDATE already set -> show existing freezer event, do not edit
-    // 1 match + REVIEWEDDATE null -> set REVIEWEDDATE + REVIEWEDBY
+    // 1 match + REVIEWEDDATE null -> set REVIEWEDDATE + REVIEWEDBY from TrapData Creator
     // >1 matches -> duplicate-barcode safety stop
     const q=state.layer.createQuery();
     q.where=`${f.barcode} = '${escapeSql(barcode)}'`;
@@ -329,6 +356,7 @@
       f.location,
       f.zone,
       f.fieldTech,
+      state.creatorFieldName,
       f.reviewedBy,
       f.freezerTime
     ].filter(Boolean);
@@ -366,12 +394,17 @@
       };
     }
 
-    if(!state.currentUsername){
-      throw new Error("Signed-in ArcGIS username could not be determined.");
+    if(!state.creatorFieldName){
+      throw new Error("TrapData Creator field was not found. Expected created_user or Creator.");
+    }
+
+    const trapCreator=String(attrs[state.creatorFieldName]??"").trim();
+    if(!trapCreator){
+      throw new Error(`TrapData ${state.creatorFieldName} is blank. Nothing was changed.`);
     }
 
     attrs[f.freezerTime]=new Date();
-    attrs[f.reviewedBy]=state.currentUsername;
+    attrs[f.reviewedBy]=trapCreator;
 
     const edits=await state.layer.applyEdits({updateFeatures:[feature]});
     const er=edits.updateFeatureResults?.[0];
@@ -400,7 +433,7 @@
     const attrs={
       [f.barcode]:barcode,[f.activity]:cfg.retrievedValue||"R",[f.retrieved]:new Date(Date.now()-5400000),
       [f.location]:`SITE-${String(Math.floor(Math.random()*30)+1).padStart(3,"0")}`,
-      [f.zone]:String(Math.floor(Math.random()*5)+1),[f.fieldTech]:"Demo Tech",[f.reviewedBy]:"demo_user",[f.freezerTime]:new Date()
+      [f.zone]:String(Math.floor(Math.random()*5)+1),[f.fieldTech]:"Demo Tech",[f.reviewedBy]:"demo_creator",[f.freezerTime]:new Date()
     };
     demoRows.unshift(attrs);
     return {status:"saved",attributes:attrs};

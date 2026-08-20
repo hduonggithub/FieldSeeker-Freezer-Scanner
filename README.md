@@ -1,4 +1,4 @@
-# FieldSeeker Freezer Scanner v1.14
+# FieldSeeker Freezer Scanner v1.15
 
 ## What v1 does
 - Scan/enter Trap Barcode
@@ -310,3 +310,26 @@ While Refresh or Period filtering is running:
 - Refresh and Period controls are temporarily disabled.
 
 This is an indeterminate spinner rather than a percentage bar because ArcGIS `queryFeatures()` does not provide query progress percentages.
+
+
+## v1.15 shared lab login + Creator-based Freezer By
+
+`REVIEWEDBY` is no longer populated from the ArcGIS account currently signed into the Freezer Scanner.
+
+The app now automatically detects the TrapData editor-tracking Creator field:
+
+1. `created_user` — preferred for production TrapData
+2. `Creator` — fallback for the prototype TrapData
+
+On a successful freezer check-in:
+
+```text
+REVIEWEDDATE = current check-in time
+REVIEWEDBY   = TrapData Creator
+```
+
+This allows a shared/dedicated lab ArcGIS account to remain signed into the freezer iPad without requiring each user to switch ArcGIS accounts before scanning.
+
+The signed-in ArcGIS account is still required for permission to query and update the feature layer, but it is no longer used as the value written into `REVIEWEDBY`.
+
+If neither `created_user` nor `Creator` exists, or if the detected Creator value is blank, the app refuses the freezer update and shows an error rather than writing the shared lab username.
