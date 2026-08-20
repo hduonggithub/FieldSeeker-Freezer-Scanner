@@ -1,4 +1,4 @@
-# FieldSeeker Freezer Scanner v1.8
+# FieldSeeker Freezer Scanner v1.9
 
 ## What v1 does
 - Scan/enter Trap Barcode
@@ -224,3 +224,12 @@ The separate **Check In** button has been removed.
 - Bluetooth/USB barcode scanner: scan + Enter submits automatically.
 - Camera: tap **📷**. While open, the same button becomes **🔄** to switch cameras and **✕** closes it manually.
 - After any barcode is decoded, the camera closes and the result is shown.
+
+
+## v1.9 simplified scanner panel
+
+- Removed the **Session** counter. It only counted successful new freezer check-ins since the current page/app session started, so it was redundant with the filtered trap list.
+- Combined status, rules, and trap information into one expandable **Scan Status** group.
+- The group is compact while idle.
+- It automatically expands after a barcode result so the operator can see trap details.
+- The operator can collapse it again by tapping the status row.

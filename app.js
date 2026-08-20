@@ -7,7 +7,7 @@
   const state = {
     demo:false, layer:null, identityManager:null, scanner:null, cameraRunning:false, cameraDecodeLocked:false,
     cameraFacing:"user", cameraSwitching:false,
-    processing:false, sessionCount:0, todayRows:[], lastScannedBarcode:"", lastScanAt:0,
+    processing:false, todayRows:[], lastScannedBarcode:"", lastScanAt:0,
     currentUsername:"", currentFullName:""
   };
 
@@ -328,6 +328,8 @@
       const a=result.attributes;
 
       updateLastRecord(a);
+      const infoGroup=$("scan-info-group");
+      if(infoGroup) infoGroup.open=true;
 
       if(result.status==="already"){
         const who=a[f.reviewedBy] ? ` by ${a[f.reviewedBy]}` : "";
@@ -350,8 +352,6 @@
         return;
       }
 
-      state.sessionCount++;
-      $("session-count").textContent=String(state.sessionCount);
       addTodayRecord(a);
 
       setStatus(
@@ -361,7 +361,12 @@
       );
       $("barcode-input").value="";
       if(navigator.vibrate)navigator.vibrate(80);
-    }catch(err){console.error(err);setStatus("error","NOT CHECKED IN",err.message||"Unknown error.");}
+    }catch(err){
+      console.error(err);
+      setStatus("error","NOT CHECKED IN",err.message||"Unknown error.");
+      const infoGroup=$("scan-info-group");
+      if(infoGroup) infoGroup.open=true;
+    }
     finally{setBusy(false);$("barcode-input").focus();}
   }
 
