@@ -115,7 +115,11 @@
         <label>Search<input id="table-search" type="search" placeholder="Barcode or location" /></label>
       </div>
 
-      <div class="table-wrap">
+      <div class="table-wrap list-loading-host">
+        <div id="list-loading-overlay" class="list-loading-overlay hidden" aria-live="polite">
+          <div class="spinner" aria-hidden="true"></div>
+          <div id="list-loading-text">Loading freezer records…</div>
+        </div>
         <table>
           <thead>
             <tr>
@@ -133,6 +137,6 @@
     </section>
   </main>
 
-  <footer>FieldSeeker Freezer Scanner v1.13</footer>
+  <footer>FieldSeeker Freezer Scanner v1.14</footer>
 </body>
 </html>

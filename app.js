@@ -257,9 +257,43 @@
     await loadTodayRows();
   }
 
+  function setListLoading(isLoading,message="Loading freezer records…"){
+    const overlay=$("list-loading-overlay");
+    const text=$("list-loading-text");
+    const refresh=$("refresh-btn");
+    const period=$("period-filter");
+
+    if(text) text.textContent=message;
+
+    if(overlay){
+      overlay.classList.toggle("hidden",!isLoading);
+    }
+
+    if(refresh){
+      refresh.disabled=isLoading;
+      refresh.classList.toggle("loading",isLoading);
+      refresh.textContent=isLoading ? "Loading…" : "Refresh";
+    }
+
+    if(period){
+      period.disabled=isLoading;
+    }
+  }
+
   async function loadTodayRows(){
-    if(state.demo){state.todayRows=demoRows.map(x=>({...x}));renderTable();return;}
-    const q=state.layer.createQuery();
+    if(state.demo){
+      setListLoading(true,"Loading demo records…");
+      await new Promise(r=>setTimeout(r,250));
+      state.todayRows=demoRows.map(x=>({...x}));
+      renderTable();
+      setListLoading(false);
+      return;
+    }
+
+    setListLoading(true,"Loading freezer records…");
+
+    try{
+      const q=state.layer.createQuery();
     const period=$("period-filter")?.value || "this-week";
     const start=periodStart(period);
 
@@ -272,8 +306,11 @@
     q.returnGeometry=false;
     q.orderByFields=[`${f.freezerTime} DESC`];
     q.num=Number(cfg.recentLimit||1000);
-    state.todayRows=(await state.layer.queryFeatures(q)).features;
-    renderTable();
+      state.todayRows=(await state.layer.queryFeatures(q)).features;
+      renderTable();
+    }finally{
+      setListLoading(false);
+    }
   }
 
   async function liveCheckIn(barcode){

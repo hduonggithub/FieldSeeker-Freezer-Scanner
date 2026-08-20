@@ -1,4 +1,4 @@
-# FieldSeeker Freezer Scanner v1.13
+# FieldSeeker Freezer Scanner v1.14
 
 ## What v1 does
 - Scan/enter Trap Barcode
@@ -296,3 +296,17 @@ The **All** option was removed.
 Even if the UI or config passes an unexpected period value, the app falls back to a hard **30-day maximum**, so the freezer list never queries the full TrapData history.
 
 The barcode scan lookup is unchanged and still searches the full TrapData layer by exact barcode so an older valid trap can still be found.
+
+
+## v1.14 query loading feedback
+
+The **Traps Added** panel now has a visual busy state for ArcGIS queries.
+
+While Refresh or Period filtering is running:
+
+- a spinner overlays the table,
+- the message says **Loading freezer records…** or **Updating freezer list…**,
+- the Refresh button changes to **Loading…**,
+- Refresh and Period controls are temporarily disabled.
+
+This is an indeterminate spinner rather than a percentage bar because ArcGIS `queryFeatures()` does not provide query progress percentages.
