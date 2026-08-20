@@ -235,9 +235,14 @@ tbody tr:first-child td{background:#fbfdfc}tbody tr:hover td{background:#f7faf8}
   color:var(--text);
 }
 
-.freezer-help-popover strong{
+.freezer-help-popover > strong{
   display:block;
   margin-bottom:7px;
+}
+
+.freezer-help-popover p strong{
+  display:inline;
+  margin:0;
 }
 
 .freezer-help-popover p{
@@ -246,4 +251,25 @@ tbody tr:first-child td{background:#fbfdfc}tbody tr:hover td{background:#f7faf8}
 
 .freezer-help-popover p + p{
   margin-top:7px;
+}
+
+
+/* v1.11 — instruction popover readability */
+.freezer-help-popover{
+  width:340px;
+  max-width:calc(100vw - 40px);
+  line-height:1.35;
+}
+
+.freezer-help-popover p{
+  white-space:normal;
+  overflow-wrap:normal;
+  word-break:normal;
+}
+
+@media(max-width:480px){
+  .freezer-help-popover{
+    width:min(320px, calc(100vw - 28px));
+    left:-36px;
+  }
 }

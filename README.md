@@ -1,4 +1,4 @@
-# FieldSeeker Freezer Scanner v1.10
+# FieldSeeker Freezer Scanner v1.11
 
 ## What v1 does
 - Scan/enter Trap Barcode
@@ -246,3 +246,8 @@ Freezer Check-In  (i)
 ```
 
 Tap **i** to show the instructions; tap it again to close them. The normal scanner interface stays compact.
+
+
+## v1.11 instruction popover fix
+
+Fixed the info popover text wrapping. Inline emphasis such as **Enter** and **Retrieved** now stays on the same sentence line instead of forcing line breaks.
