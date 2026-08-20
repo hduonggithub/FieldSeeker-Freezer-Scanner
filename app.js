@@ -136,8 +136,31 @@
 
   function setStatus(kind,title,message){
     $("status-card").className=`status-card ${kind}`;
-    $("status-icon").textContent=({neutral:"●",success:"✓",error:"✕",warning:"!"})[kind]||"●";
-    $("status-title").textContent=title; $("status-message").textContent=message;
+
+    const icon=$("status-icon");
+    icon.textContent=({neutral:"●",success:"✓",error:"✕",warning:"!"})[kind]||"●";
+
+    const canReset=kind==="error";
+    icon.classList.toggle("status-reset",canReset);
+    icon.setAttribute("role",canReset ? "button" : "img");
+    icon.setAttribute("tabindex",canReset ? "0" : "-1");
+    icon.setAttribute("aria-label",canReset ? "Clear message and return to Ready" : "");
+
+    $("status-title").textContent=title;
+    $("status-message").textContent=message;
+  }
+
+  function resetScanStatus(){
+    if(!$("status-card").classList.contains("error")) return;
+
+    $("barcode-input").value="";
+    clearLastRecord();
+    setStatus("neutral","Ready","Scan the next trap.");
+
+    const infoGroup=$("scan-info-group");
+    if(infoGroup) infoGroup.open=false;
+
+    $("barcode-input").focus();
   }
   function setBusy(b){
     state.processing=b; $("barcode-input").disabled=b; $("camera-control-btn").disabled=b; $("refresh-btn").disabled=b;
@@ -568,6 +591,22 @@
 
   function wireEvents(){
     $("barcode-input").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();processBarcode(e.currentTarget.value);}});
+
+    $("status-icon").addEventListener("click",e=>{
+      if(!$("status-card").classList.contains("error")) return;
+      e.preventDefault();
+      e.stopPropagation();
+      resetScanStatus();
+    });
+
+    $("status-icon").addEventListener("keydown",e=>{
+      if(!$("status-card").classList.contains("error")) return;
+      if(e.key==="Enter" || e.key===" "){
+        e.preventDefault();
+        e.stopPropagation();
+        resetScanStatus();
+      }
+    });
     $("camera-control-btn").addEventListener("click",cameraControl);
     $("camera-close-btn").addEventListener("click",()=>stopCamera());
     $("refresh-btn").addEventListener("click",async()=>{try{await loadTodayRows();setStatus("neutral","Ready","List refreshed.");}catch(err){setStatus("error","Refresh failed",err.message||"Could not refresh.");}});

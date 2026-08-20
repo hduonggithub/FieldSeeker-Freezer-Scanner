@@ -370,3 +370,24 @@ tbody tr:first-child td{background:#fbfdfc}tbody tr:hover td{background:#f7faf8}
     animation-duration:1.6s;
   }
 }
+
+
+/* v1.17 — error X can reset the scanner to Ready */
+.status-icon.status-reset{
+  cursor:pointer;
+  border-radius:50%;
+  transition:background .15s ease, transform .15s ease;
+}
+
+.status-icon.status-reset:hover{
+  background:rgba(180,40,40,.08);
+}
+
+.status-icon.status-reset:active{
+  transform:scale(.94);
+}
+
+.status-icon.status-reset:focus{
+  outline:2px solid rgba(180,40,40,.24);
+  outline-offset:2px;
+}

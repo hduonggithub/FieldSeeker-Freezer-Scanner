@@ -1,4 +1,4 @@
-# FieldSeeker Freezer Scanner v1.16
+# FieldSeeker Freezer Scanner v1.17
 
 ## What v1 does
 - Scan/enter Trap Barcode
@@ -373,3 +373,18 @@ If the barcode exists, the current matching Trap Information is shown for:
 - successful freezer check-in,
 - already in freezer,
 - not retrieved.
+
+
+## v1.17 clickable error X
+
+When the scanner shows an error such as **NOT CHECKED IN** or **NOT RETRIEVED**, the red `✕` icon is now clickable.
+
+Clicking/tapping the `✕`:
+
+- clears the barcode text box,
+- clears any displayed Trap Information,
+- returns the status to **Ready — Scan the next trap**,
+- collapses the status details,
+- puts focus back in the barcode box.
+
+The `✕` is only interactive while the status is an error.
